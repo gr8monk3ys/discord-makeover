@@ -41,7 +41,13 @@ GAMES = [
 ROLES = [
     {"name": "Keeper", "color": FOREST, "hoist": True, "admin": True, "was": ["Admin"]},
     {"name": "Moderator", "keep": True},
+    # Hosted bots: their roles must sit above the roles they hand out
+    # (Captcha.bot gives @Verified).
+    {"name": "Captcha.bot", "keep": True},
+    {"name": "MEE6", "keep": True},
+    {"name": "GiveawayBot", "keep": True},
     {"name": "Squad", "color": MOSS, "hoist": True, "was": ["Member"]},
+    {"name": "Verified"},  # given by Captcha.bot after the captcha; unlocks media
     {"name": "Guest", "color": MUTED},
     {"name": "Bots", "color": SLATE, "hoist": True, "was": ["Bot"]},
     {"name": "LFG", "mentionable": True},
@@ -231,3 +237,12 @@ REVOKE_PERMANENT_INVITES = True
 AUTOMOD_ALERTS = "🛡️・mod"
 AUTOMOD_EXEMPT_ROLES = ["Keeper", "Moderator"]
 MENTION_LIMIT = 6
+
+# New-member media lock: @everyone can't post images, files or link embeds
+# until they pass the captcha (Captcha.bot gives @Verified). These roles
+# get media back.
+MEDIA_ROLES = ["Keeper", "Moderator", "Squad", "Verified"]
+
+# Every bot member (except Front Desk itself) gets this role, so bots are
+# grouped together in the member list.
+BOT_ROLE = "Bots"

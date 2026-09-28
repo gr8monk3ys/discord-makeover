@@ -9,6 +9,7 @@
 - Welcome Screen with the five channels new members should see first
 - AutoMod: spam, mention raids, slurs and sexual content (trash talk is fine)
 - revokes never-expiring invites the bot made (short-lived links are safer)
+- media lock: @everyone can't post images/files/link embeds until @Verified
 """
 
 import argparse
@@ -198,6 +199,39 @@ class Polish:
             lambda: self.guild.edit_welcome_screen(description=cfg["description"], welcome_channels=chans, enabled=True),
         )
 
+    # ------------------------------------------------------------ media lock
+    async def media_lock(self):
+        print("\nMedia lock")
+        media = discord.Permissions(attach_files=True, embed_links=True)
+        everyone = self.guild.default_role
+        if everyone.permissions.attach_files or everyone.permissions.embed_links:
+            locked = discord.Permissions(everyone.permissions.value & ~media.value)
+            await self.do("update", "@everyone: no images, files or link embeds", lambda: everyone.edit(permissions=locked))
+        else:
+            print("  ok      @everyone is locked")
+        for name in layout.MEDIA_ROLES:
+            role = self.role(name)
+            if role is None:
+                print(f"! missing role @{name} (run setup_server.py first)")
+                continue
+            if role.permissions.administrator or (role.permissions.value & media.value) == media.value:
+                print(f"  ok      @{name} can post media")
+                continue
+            granted = discord.Permissions(role.permissions.value | media.value)
+            await self.do("update", f"@{name}: allow images, files and embeds", lambda: role.edit(permissions=granted))
+
+    # ------------------------------------------------------------ bot role
+    async def bot_role(self):
+        print("\nBots")
+        role = self.role(layout.BOT_ROLE)
+        async for m in self.guild.fetch_members(limit=None):
+            if not m.bot or m.id == self.guild.me.id:
+                continue
+            if role in m.roles:
+                print(f"  ok      {m.name} has @{role.name}")
+            else:
+                await self.do("give", f"@{role.name} to {m.name}", lambda: m.add_roles(role))
+
     # ------------------------------------------------------------ invites
     async def invites(self):
         print("\nInvites")
@@ -223,6 +257,8 @@ class Polish:
         await self.welcome_screen()
         await self.automod()
         await self.invites()
+        await self.media_lock()
+        await self.bot_role()
         print("\nDone." if self.apply else "\nThat's the plan. Run again with --apply.")
         return True
 
@@ -237,7 +273,9 @@ def main():
     if not token or not guild_id:
         sys.exit("Set DISCORD_TOKEN and GUILD_ID in server/.env (copy .env.example).")
 
-    client = discord.Client(intents=discord.Intents.default())
+    intents = discord.Intents.default()
+    intents.members = True  # to find bot members; enable "Server Members Intent" in the portal
+    client = discord.Client(intents=intents)
     result = {"ok": False}
 
     @client.event

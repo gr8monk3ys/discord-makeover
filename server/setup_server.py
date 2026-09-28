@@ -81,7 +81,8 @@ class Makeover:
             name = spec["name"]
             if spec.get("keep"):
                 # Existing role we only slot into place; colour/perms untouched.
-                role = find(editable, spec)
+                # may be a bot's managed role, so search all roles
+                role = find([r for r in self.guild.roles if not r.is_default()], spec)
                 if role is not None and role < self.guild.me.top_role:
                     print(f"  ok      @{role.name} (kept as-is)")
                     self.touched.add(role.id)
