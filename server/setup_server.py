@@ -27,9 +27,14 @@ def slug(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", name.lower())
 
 
-def find(items, name):
-    target = slug(name)
-    return next((i for i in items if slug(i.name) == target), None)
+def find(items, spec):
+    """Match by the layout name first, then by any old names listed under "was"."""
+    for name in [spec["name"], *spec.get("was", [])]:
+        target = slug(name)
+        hit = next((i for i in items if slug(i.name) == target), None)
+        if hit is not None:
+            return hit
+    return None
 
 
 def layout_channels():
@@ -61,11 +66,10 @@ class Makeover:
             print("! The bot needs the Administrator permission (it creates an admin role")
             print("  and read-only channels). Re-invite it with the link in the README.")
             return False
-        needed = len(layout.ROLES)
-        if me.top_role.position <= needed:
-            print(f"! The bot's role '{me.top_role.name}' is too low to arrange {needed} roles.")
-            print("  Server Settings -> Roles: drag it to the very top, then run this again.")
-            return False
+        above = [r.name for r in self.guild.roles if r > me.top_role]
+        if above:
+            print(f"! '{me.top_role.name}' sits below {', '.join('@' + n for n in above)}; those roles")
+            print("  can't be touched. Drag it to the very top in Server Settings -> Roles to fix.")
         return True
 
     # ------------------------------------------------------------ roles
@@ -84,7 +88,7 @@ class Makeover:
             if spec.get("admin"):
                 kwargs["permissions"] = discord.Permissions(administrator=True)
 
-            role = find(editable, name)
+            role = find(editable, spec)
             if role is None:
                 role = await self.do("create", f"@{name}", lambda: self.guild.create_role(**kwargs))
             elif role >= self.guild.me.top_role:
@@ -104,7 +108,9 @@ class Makeover:
         if not self.apply:
             print("  order   stack roles in layout order under the bot's role")
         elif ordered:
-            top = self.guild.me.top_role.position - 1
+            # Positions shift as roles are created, so ask Discord for the current ones.
+            fresh = {r.id: r for r in await self.guild.fetch_roles()}
+            top = fresh[self.guild.me.top_role.id].position - 1
             await self.guild.edit_role_positions({role: top - i for i, role in enumerate(ordered)})
             print("  order   roles stacked in layout order")
 
@@ -127,7 +133,7 @@ class Makeover:
         for cat_spec in layout.CATEGORIES:
             name = cat_spec["name"]
             print(f"\n{name.upper()}")
-            cat = find(self.guild.categories, name)
+            cat = find(self.guild.categories, cat_spec)
             if cat is None:
                 cat = await self.do("create", f"category {name}", lambda: self.guild.create_category(name))
             elif cat.name != name:
@@ -163,7 +169,7 @@ class Makeover:
             kwargs["topic"] = spec.get("topic", "")
             kwargs["slowmode_delay"] = spec.get("slowmode", 0)
 
-        ch = find(pool, name)
+        ch = find(pool, spec)
         if ch is None:
             if spec.get("read_only"):
                 kwargs["overwrites"] = self.read_only_overwrites()

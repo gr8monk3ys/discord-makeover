@@ -21,15 +21,19 @@ GAMES = [
     ("⛏️", "minecraft", "Minecraft"),
 ]
 
+# Any role, category or channel can list old names under "was": the existing
+# one is renamed and restyled in place, so members, messages and permissions
+# carry over instead of ending up with a duplicate.
+
 # ---------------------------------------------------------------- roles
 # Top to bottom. Only Keeper and Squad get a name colour (the One Pen Rule:
 # colour marks what matters, it isn't wallpaper). Game roles are colourless
 # ping roles.
 ROLES = [
-    {"name": "Keeper", "color": FOREST, "hoist": True, "admin": True},
-    {"name": "Squad", "color": MOSS, "hoist": True},
+    {"name": "Keeper", "color": FOREST, "hoist": True, "admin": True, "was": ["Admin"]},
+    {"name": "Squad", "color": MOSS, "hoist": True, "was": ["Member"]},
     {"name": "Guest", "color": MUTED},
-    {"name": "Bots", "color": SLATE, "hoist": True},
+    {"name": "Bots", "color": SLATE, "hoist": True, "was": ["Bot"]},
     {"name": "LFG", "mentionable": True},
     *({"name": role, "mentionable": True} for _, _, role in GAMES),
 ]
@@ -41,6 +45,7 @@ ROLES = [
 CATEGORIES = [
     {
         "name": "01 · front desk",
+        "was": ["Welcome"],
         "channels": [
             {"name": "📌・rules", "topic": "Read these once. They're short.", "read_only": True, "post": "rules"},
             {"name": "📣・announcements", "topic": "Game nights, updates, server news.", "read_only": True},
@@ -60,6 +65,7 @@ CATEGORIES = [
     {
         "name": "03 · games",
         "channels": [
+            {"name": "🕹️・gaming", "topic": "General gaming chat.", "was": ["gaming"]},
             {"name": "🎮・lfg", "topic": "Looking for group? Ping @LFG here."},
             *(
                 {"name": f"{emoji}・{channel}", "topic": f"{role} talk, squads, and strats. Ping @{role}."}
@@ -68,13 +74,32 @@ CATEGORIES = [
         ],
     },
     {
-        "name": "04 · voice",
+        "name": "04 · off topic",
         "channels": [
-            {"name": "🔊 Lobby", "type": "voice"},
-            {"name": "🎮 Squad I", "type": "voice", "user_limit": 5},
+            {"name": "🎨・art", "topic": "Things you made."},
+            {"name": "💻・code", "topic": "Projects, snippets, and bugs."},
+            {"name": "👗・fashion", "topic": "Fits and finds."},
+            {"name": "♟️・chess", "topic": "Games, puzzles, and challenges."},
+        ],
+    },
+    {
+        "name": "05 · voice",
+        "was": ["Voice Channels"],
+        "channels": [
+            {"name": "🔊 Lobby", "type": "voice", "was": ["General"]},
+            {"name": "🎮 Squad I", "type": "voice", "user_limit": 5, "was": ["General 2"]},
             {"name": "🎮 Squad II", "type": "voice", "user_limit": 5},
             {"name": "🎧 Chill", "type": "voice"},
             {"name": "💤 AFK", "type": "voice", "afk": True},
+        ],
+    },
+    {
+        # Staff-only: channels keep their existing permissions.
+        "name": "00 · staff",
+        "was": ["Admin"],
+        "channels": [
+            {"name": "🛡️・mod", "was": ["mod"]},
+            {"name": "🔒・admin", "was": ["admin"]},
         ],
     },
 ]
