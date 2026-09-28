@@ -1,0 +1,339 @@
+/**
+ * @name Field Notebook
+ * @author gr8monk3ys
+ * @version 1.0.0
+ * @description lscaturchio.xyz for Discord: warm paper (light) or night paper (dark), forest-green ink, Fraunces headings, Plex Mono wall labels.
+ * @website https://lscaturchio.xyz
+ * @source https://github.com/gr8monk3ys/lscaturchio.xyz
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,650;9..144,720&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600;700&display=swap");
+
+/* ============================================================
+ * TOKENS — straight from DESIGN.md
+ * ============================================================ */
+
+:root {
+  --nb-font-display: "Fraunces", "gg sans", ui-serif, Georgia, serif;
+  --nb-font-body: "Instrument Sans", "gg sans", ui-sans-serif, system-ui, sans-serif;
+  --nb-font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --nb-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Night notebook: Discord's Dark / Darker / Midnight all land here. */
+.theme-dark.theme-dark,
+.theme-darker.theme-darker,
+.theme-midnight.theme-midnight {
+  --nb-page: #111317;          /* night */
+  --nb-card: #16181d;          /* night-card */
+  --nb-tint: #25272d;          /* night-tinted */
+  --nb-frame: #0d0f12;         /* one step below night, for the server rail */
+  --nb-ink: #fafafa;           /* night-ink */
+  --nb-ink-muted: #abb0ba;     /* night-ink-muted */
+  --nb-ink-faint: #767c87;
+  --nb-hairline: #292c32;      /* night-hairline */
+  --nb-pen: #42a979;           /* forest-ink-dark: the one pen */
+  --nb-pen-hover: #4fb986;
+  --nb-pen-text: #0b1a12;
+  --nb-pen-rgb: 66, 169, 121;
+  --nb-error: #e87c7c;
+  --nb-scrim: rgba(10, 10, 10, 0.55);
+}
+
+/* Paper notebook: Discord's Light theme. */
+.theme-light.theme-light {
+  --nb-page: #fbfaf9;          /* paper-card: where the writing is */
+  --nb-card: #f9f8f5;          /* paper */
+  --nb-tint: #eeece7;          /* paper-tinted */
+  --nb-frame: #eeece7;
+  --nb-ink: #1a1f23;           /* ink */
+  --nb-ink-muted: #606976;     /* ink-muted */
+  --nb-ink-faint: #8a919b;
+  --nb-hairline: #e2dbd5;      /* hairline: sand, never grey */
+  --nb-pen: #184e35;           /* forest-ink */
+  --nb-pen-hover: #1f6143;
+  --nb-pen-text: #ffffff;
+  --nb-pen-rgb: 24, 78, 53;
+  --nb-error: #a61b1b;
+  --nb-scrim: rgba(10, 10, 10, 0.25);
+}
+
+/* ============================================================
+ * DISCORD VARIABLE MAP
+ * Both the current ("visual refresh") names and the legacy ones,
+ * so the theme survives whichever Discord build you're on.
+ * ============================================================ */
+
+.theme-dark.theme-dark,
+.theme-darker.theme-darker,
+.theme-midnight.theme-midnight,
+.theme-light.theme-light {
+  /* type */
+  --font-primary: var(--nb-font-body);
+  --font-display: var(--nb-font-body);
+  --font-headline: var(--nb-font-display);
+  --font-code: var(--nb-font-mono);
+
+  /* surfaces — current names */
+  --app-frame-background: var(--nb-frame);
+  --app-frame-border: var(--nb-hairline);
+  --background-base-lowest: var(--nb-frame);
+  --background-base-lower: var(--nb-page);
+  --background-base-low: var(--nb-card);
+  --background-surface-high: var(--nb-card);
+  --background-surface-higher: var(--nb-card);
+  --background-surface-highest: var(--nb-tint);
+  --chat-background-default: var(--nb-page);
+  --chat-input-container-background: var(--nb-card);
+  --input-background-default: var(--nb-card);
+  --input-border-default: var(--nb-hairline);
+  --modal-background: var(--nb-card);
+  --modal-footer-background: var(--nb-page);
+  --card-background-default: var(--nb-card);
+  --background-mod-subtle: rgba(var(--nb-pen-rgb), 0.05);
+  --background-mod-normal: rgba(var(--nb-pen-rgb), 0.08);
+  --background-mod-strong: rgba(var(--nb-pen-rgb), 0.12);
+  --border-subtle: var(--nb-hairline);
+  --border-normal: var(--nb-hairline);
+  --border-strong: var(--nb-hairline);
+
+  /* surfaces — legacy names */
+  --background-primary: var(--nb-page);
+  --background-secondary: var(--nb-card);
+  --background-secondary-alt: var(--nb-card);
+  --background-tertiary: var(--nb-frame);
+  --background-accent: var(--nb-tint);
+  --background-floating: var(--nb-card);
+  --background-nested-floating: var(--nb-card);
+  --background-mobile-primary: var(--nb-page);
+  --background-mobile-secondary: var(--nb-card);
+  --channeltextarea-background: var(--nb-card);
+  --deprecated-card-bg: var(--nb-card);
+  --deprecated-card-editable-bg: var(--nb-card);
+  --deprecated-store-bg: var(--nb-page);
+  --background-modifier-hover: rgba(var(--nb-pen-rgb), 0.06);
+  --background-modifier-active: rgba(var(--nb-pen-rgb), 0.09);
+  --background-modifier-selected: rgba(var(--nb-pen-rgb), 0.12);
+  --background-modifier-accent: var(--nb-hairline);
+  --background-message-hover: rgba(var(--nb-pen-rgb), 0.035);
+
+  /* text */
+  --text-default: var(--nb-ink);
+  --text-normal: var(--nb-ink);
+  --text-strong: var(--nb-ink);
+  --text-muted: var(--nb-ink-muted);
+  --text-subtle: var(--nb-ink-faint);
+  --text-link: var(--nb-pen);
+  --text-brand: var(--nb-pen);
+  --text-positive: var(--nb-pen);
+  --text-danger: var(--nb-error);
+  --header-primary: var(--nb-ink);
+  --header-secondary: var(--nb-ink-muted);
+  --channels-default: var(--nb-ink-muted);
+  --channel-icon: var(--nb-ink-faint);
+  --channel-text-area-placeholder: var(--nb-ink-faint);
+  --interactive-normal: var(--nb-ink-muted);
+  --interactive-hover: var(--nb-ink);
+  --interactive-active: var(--nb-ink);
+  --interactive-muted: var(--nb-ink-faint);
+  --interactive-text-default: var(--nb-ink-muted);
+  --interactive-text-hover: var(--nb-ink);
+  --interactive-text-active: var(--nb-ink);
+  --interactive-background-hover: rgba(var(--nb-pen-rgb), 0.06);
+  --interactive-background-active: rgba(var(--nb-pen-rgb), 0.09);
+  --interactive-background-selected: rgba(var(--nb-pen-rgb), 0.12);
+
+  /* the one pen */
+  --brand-360: var(--nb-pen-hover);
+  --brand-400: var(--nb-pen-hover);
+  --brand-430: var(--nb-pen);
+  --brand-460: var(--nb-pen);
+  --brand-500: var(--nb-pen);
+  --brand-530: var(--nb-pen);
+  --brand-560: var(--nb-pen-hover);
+  --brand-600: var(--nb-pen-hover);
+  --brand-experiment: var(--nb-pen);
+  --brand-experiment-560: var(--nb-pen-hover);
+  --control-brand-foreground: var(--nb-pen);
+  --control-brand-foreground-new: var(--nb-pen);
+  --button-filled-brand-background: var(--nb-pen);
+  --button-filled-brand-background-hover: var(--nb-pen-hover);
+  --button-filled-brand-background-active: var(--nb-pen);
+  --button-filled-brand-text: var(--nb-pen-text);
+  --mention-foreground: var(--nb-pen);
+  --mention-background: rgba(var(--nb-pen-rgb), 0.14);
+  --info-help-foreground: var(--nb-pen);
+  --status-positive: #16a249;
+  --status-danger: var(--nb-error);
+  --status-warning: #f59f0a;
+
+  /* flat paper: no drop shadows, hairlines instead */
+  --elevation-stroke: 0 0 0 1px var(--nb-hairline);
+  --elevation-low: 0 0 0 1px var(--nb-hairline);
+  --elevation-medium: 0 0 0 1px var(--nb-hairline);
+  --elevation-high: 0 0 0 1px var(--nb-hairline);
+  --shadow-low: 0 0 0 1px var(--nb-hairline);
+  --shadow-high: 0 0 0 1px var(--nb-hairline);
+  --shadow-border: 0 0 0 1px var(--nb-hairline);
+
+  /* soft-cornered paper */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  /* scrollbars */
+  --scrollbar-thin-thumb: var(--nb-hairline);
+  --scrollbar-thin-track: transparent;
+  --scrollbar-auto-thumb: var(--nb-hairline);
+  --scrollbar-auto-track: transparent;
+  --scrollbar-auto-scrollbar-color-thumb: var(--nb-hairline);
+  --scrollbar-auto-scrollbar-color-track: transparent;
+}
+
+/* ============================================================
+ * THE NOTEBOOK TOUCHES
+ * Discord's class names are hashed and change every so often;
+ * everything below uses loose [class*=] matches and degrades to
+ * "just the colours" if a selector stops matching.
+ * ============================================================ */
+
+/* the paper grain: fixed 3.5% noise over the whole app */
+#app-mount::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10000;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* forest-ink selection at 22% */
+::selection {
+  background: rgba(var(--nb-pen-rgb), 0.22);
+}
+
+/* The Serif Speaks: server name, channel title, profile names, modal titles */
+[class*="sidebar_"] header [class*="name_"],
+section[class*="title_"] h1,
+[class*="titleWrapper_"] h1,
+[class*="nickname_"],
+[class*="modal_"] h1,
+[class*="header_"] h1[class*="heading-"] {
+  font-family: var(--nb-font-display) !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.02em;
+  font-variation-settings: "opsz" 36;
+}
+
+/* The Wall Label: categories, member-list groups, timestamps, eyebrows */
+[class*="containerDefault_"] h3,
+[class*="containerDefault_"] [class*="mainContent_"] [class*="name_"]:is(h3, div)[class*="overflow_"],
+[class*="membersGroup_"],
+[class*="membersGroup_"] h3,
+[class*="eyebrow"],
+[class*="sectionTitle_"] h2,
+[class*="timestamp_"],
+[class*="timestamp_"] time,
+[class*="divider_"] [class*="content_"] {
+  font-family: var(--nb-font-mono) !important;
+  font-weight: 500;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--nb-ink-muted);
+}
+
+/* inline timestamps beside compact / grouped messages stay quieter */
+[class*="timestamp_"][class*="alt_"],
+[class*="timestampVisibleOnHover_"] {
+  letter-spacing: 0.06em;
+  font-size: 0.66rem !important;
+}
+
+/* Sand Hairline Rule: 1px rules between the columns */
+[class*="sidebar_"] {
+  border-right: 1px solid var(--nb-hairline);
+}
+[class*="membersWrap_"] {
+  border-left: 1px solid var(--nb-hairline);
+}
+section[class*="title_"],
+[class*="sidebar_"] header {
+  box-shadow: 0 1px 0 var(--nb-hairline) !important;
+}
+
+/* the underline input: the message box is a rule drawn on the page */
+[class*="channelTextArea_"] [class*="scrollableContainer_"] {
+  background: var(--nb-card);
+  border: 1px solid var(--nb-hairline);
+  border-radius: 14px;
+  transition: border-color 200ms var(--nb-ease);
+}
+[class*="channelTextArea_"]:focus-within [class*="scrollableContainer_"] {
+  border-color: rgba(var(--nb-pen-rgb), 0.5);
+}
+
+/* hovered channel / DM rows: tint + pen colour, never a lift */
+[class*="containerDefault_"] [class*="link_"],
+[class*="channel_"] [class*="interactive_"] {
+  transition: background-color 150ms ease, color 150ms ease;
+}
+[class*="containerDefault_"]:hover [class*="name_"],
+[class*="channel_"]:hover [class*="name_"] {
+  color: var(--nb-ink);
+}
+
+/* the selected channel gets the pen: a 2px ink mark at the left edge */
+[class*="containerDefault_"][class*="selected_"] [class*="link_"],
+[class*="modeSelected_"] [class*="link_"] {
+  box-shadow: inset 2px 0 0 var(--nb-pen);
+}
+
+/* links: pen colour, underline on hover */
+a[class*="anchor_"] {
+  color: var(--nb-pen);
+  text-underline-offset: 2px;
+}
+
+/* inline code + code blocks in Plex Mono on tinted paper */
+code,
+pre code,
+[class*="markup_"] code {
+  font-family: var(--nb-font-mono) !important;
+  background: var(--nb-tint) !important;
+  border: 1px solid var(--nb-hairline) !important;
+}
+
+/* embeds: hairline-bordered paper, left bar in pen colour unless the bot set one */
+article[class*="embedFull_"] {
+  background: var(--nb-card);
+  border: 1px solid var(--nb-hairline);
+}
+
+/* Scrim Rule: modals separate with ink, not with the page colour */
+[class*="backdrop_"] {
+  background: var(--nb-scrim) !important;
+  backdrop-filter: blur(2px);
+}
+
+/* Flat Paper Rule: kill the remaining decorative shadows */
+[class*="menu_"],
+[class*="popout_"],
+[class*="userPopoutOuter_"],
+[class*="autocomplete_"] {
+  box-shadow: 0 0 0 1px var(--nb-hairline) !important;
+}
+
+/* motion: a soft settle, and nothing at all under reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
