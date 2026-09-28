@@ -189,7 +189,10 @@ COMMUNITY = {
 ONBOARDING_DEFAULT_CHANNELS = [
     "📌・rules", "📣・announcements", "👋・welcome", "💬・general",
     "🤣・memes", "📸・clips", "🕹️・gaming", "🎮・lfg", "🎨・art", "💻・code",
+    "👗・fashion", "♟️・chess", "🔊 Lobby", "🎮 Squad", "💤 AFK",
 ]
+# Anything public that's neither a default channel nor an Onboarding option is
+# hidden from members who went through Onboarding, so keep this list complete.
 ONBOARDING_PROMPTS = [
     {
         "title": "What do you play?",
