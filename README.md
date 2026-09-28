@@ -64,6 +64,21 @@ assign roles.
 
 The server icon comes from `assets/make_icon.py` (`pip install pillow`).
 
+**Hosted bots (always online, set up in their dashboards)**
+
+| Bot | Job | Setup |
+|---|---|---|
+| [Captcha.bot](https://captcha.bot) | DMs new members a web captcha; passing gives **@Verified** | Verification channel `#💬・general`, role `@Verified` (Add role). Its role must sit above @Verified. |
+| [Lurkr](https://lurkr.gg) | Free leveling | Enable leveling, level-up messages in `#💬・general`. |
+| [GiveawayBot](https://giveawaybot.party) | Giveaways | Nothing to set up: `/gstart <time> <winners> <prize>`. |
+
+MEE6 was tried and dropped: its Levels and Welcome plugins now need Premium.
+
+`polish_server.py` also handles the **media lock**: `@everyone` can't post images,
+files or link embeds until they have one of the `MEDIA_ROLES` (Captcha.bot's
+@Verified covers new members). The bot roles are ordered by the `keep` entries
+in `layout.ROLES`, and every bot gets `@Bots` so they're grouped in the member list.
+
 **Afterwards**
 
 - Give yourself **@Keeper** and your friends **@Squad**.
