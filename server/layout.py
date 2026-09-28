@@ -17,10 +17,8 @@ SLATE = 0x606976
 # group actually plays.
 GAMES = [
     # (emoji, channel name, role name)
-    ("🎯", "valorant", "Valorant"),
+    ("🪖", "wardogs", "Wardogs"),
     ("⛏️", "minecraft", "Minecraft"),
-    ("🚀", "rocket-league", "Rocket League"),
-    ("🪖", "fortnite", "Fortnite"),
 ]
 
 # ---------------------------------------------------------------- roles
