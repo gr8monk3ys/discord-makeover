@@ -13,12 +13,21 @@ MUTED = 0xABB0BA
 SLATE = 0x606976
 
 # ---------------------------------------------------------------- games
-# One ping role + one text channel per game. Change these to what your
-# group actually plays.
+# One ping role + one channel per game. Members pick their games in
+# Onboarding and only see the channels for games they chose, so the sidebar
+# stays short. Top friend-group games of 2026, plus the group's own picks.
 GAMES = [
     # (emoji, channel name, role name)
     ("🪖", "wardogs", "Wardogs"),
     ("⛏️", "minecraft", "Minecraft"),
+    ("🪂", "fortnite", "Fortnite"),
+    ("🎯", "valorant", "Valorant"),
+    ("💥", "call-of-duty", "Call of Duty"),
+    ("🧙", "league-of-legends", "League of Legends"),
+    ("💣", "counter-strike", "Counter-Strike 2"),
+    ("🔺", "apex-legends", "Apex Legends"),
+    ("🚗", "gta-online", "GTA Online"),
+    ("🧱", "roblox", "Roblox"),
 ]
 
 # Any role, category or channel can list old names under "was": the existing
@@ -65,7 +74,20 @@ CATEGORIES = [
         "name": "03 · games",
         "channels": [
             {"name": "🕹️・gaming", "topic": "General gaming chat.", "was": ["gaming"]},
-            {"name": "🎮・lfg", "topic": "Looking for group? Ping @LFG here."},
+            {
+                # A forum: one post per session, tagged by game, so squads
+                # don't get buried in chat.
+                "name": "🎮・lfg",
+                "type": "forum",
+                "topic": "\n".join(
+                    [
+                        "One post per session. Title it with the game and a time, like \"Wardogs, 9pm\".",
+                        "Tag the game (and Ranked or Casual). Ping @LFG if you need people right now.",
+                        "Close or delete the post once the squad is full.",
+                    ]
+                ),
+                "tags": [*((role, emoji) for emoji, _, role in GAMES), ("Ranked", "🏆"), ("Casual", "🛋️")],
+            },
             *(
                 {"name": f"{emoji}・{channel}", "topic": f"{role} talk, squads, and strats. Ping @{role}."}
                 for emoji, channel, role in GAMES
@@ -119,11 +141,12 @@ POSTS = {
                 "`02`  No cheats, no exploits, no account drama.",
                 "`03`  Clips in {#clips}, memes in {#memes}.",
                 "`04`  Spoilers go under ||spoiler tags||.",
-                "`05`  Want a squad? Ping {@LFG} in {#lfg}, not @everyone.",
-                "`06`  Keepers have the final word.",
+                "`05`  Want a squad? Post in {#lfg} and ping {@LFG}, not @everyone.",
+                "`06`  No NSFW, no slurs. AutoMod catches the worst of it.",
+                "`07`  Keepers have the final word.",
             ]
         ),
-        "footer": "FRONT DESK · 01",
+        "footer": "FRONT DESK · 01 · UPDATED 2026-09-28",
     },
     "welcome": {
         "title": "Welcome in",
@@ -134,7 +157,7 @@ POSTS = {
                 "**Roles**",
                 "{@Keeper}  runs the place",
                 "{@Squad}  the regulars",
-                "`GAME ROLES`  pings for a specific game: ask a Keeper to add yours",
+                "`GAME ROLES`  pick yours under **Channels & Roles** at the top of the channel list",
             ]
         ),
         "footer": "FRONT DESK · 03",
@@ -147,7 +170,8 @@ POSTS = {
 
 # Empty channels to remove (skipped if anyone has posted in them).
 # Small servers feel emptier with more channels: aim for 5-10 text, 2-3 voice.
-TRIM = ["🔗・links", "🤖・bot-commands", "🎮 Squad II", "🎧 Chill"]
+# Forums are never trimmed, so the old text #🎮・lfg can go once the forum exists.
+TRIM = ["🔗・links", "🤖・bot-commands", "🎮 Squad II", "🎧 Chill", "🎮・lfg"]
 
 COMMUNITY = {
     "rules_channel": "📌・rules",
@@ -158,23 +182,50 @@ COMMUNITY = {
 # the defaults everyone gets; Discord needs at least 7, 5 of them postable.
 ONBOARDING_DEFAULT_CHANNELS = [
     "📌・rules", "📣・announcements", "👋・welcome", "💬・general",
-    "🤣・memes", "📸・clips", "🕹️・gaming", "🎮・lfg",
+    "🤣・memes", "📸・clips", "🕹️・gaming", "🎮・lfg", "🎨・art", "💻・code",
 ]
 ONBOARDING_PROMPTS = [
     {
         "title": "What do you play?",
         "multi": True,
+        "required": True,
         "options": [
             *(
                 {"title": role, "emoji": emoji, "role": role, "channel": f"{emoji}・{channel}",
                  "description": f"Get @{role} pings and the #{channel} channel."}
                 for emoji, channel, role in GAMES
             ),
+            {"title": "Just here to hang", "emoji": "🛋️", "role": "Guest",
+             "description": "No game pings. You can pick some later."},
+        ],
+    },
+    {
+        "title": "Want squad pings?",
+        "multi": False,
+        "required": False,
+        "options": [
             {"title": "Ping me for squads", "emoji": "🎮", "role": "LFG",
-             "description": "Get @LFG pings when someone needs a squad."},
+             "description": "Get @LFG pings when someone needs people for a game."},
         ],
     },
 ]
+
+# Welcome Screen: the card new members see, with up to 5 channels.
+WELCOME_SCREEN = {
+    "description": "A small gaming server for friends. Read the rules, pick your games, find a squad.",
+    "channels": [
+        ("📌・rules", "📌", "Short and worth reading"),
+        ("💬・general", "💬", "Say hi"),
+        ("🎮・lfg", "🎮", "Find a squad for tonight"),
+        ("📸・clips", "📸", "Post your best plays"),
+        ("🕹️・gaming", "🕹️", "Talk games"),
+    ],
+}
+
+# Recommended for private friend servers: invite with short-lived links
+# (Server name -> Invite People), not a permanent one. True revokes any
+# never-expiring invites the bot made.
+REVOKE_PERMANENT_INVITES = True
 
 # AutoMod: alerts go to this channel; these roles are never filtered.
 AUTOMOD_ALERTS = "🛡️・mod"

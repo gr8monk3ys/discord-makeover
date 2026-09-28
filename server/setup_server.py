@@ -164,7 +164,49 @@ class Makeover:
             if cat is not None:
                 self.order.append((cat, members))
 
+    async def make_forum(self, spec, cat):
+        name = spec["name"]
+        label = f"#{name} (forum)"
+        wanted = spec.get("tags", [])
+        topic = spec.get("topic", "")
+
+        ch = find(self.guild.forums, spec)
+        if ch is None:
+            tags = [discord.ForumTag(name=n, emoji=e) for n, e in wanted]
+
+            async def create():
+                forum = await self.guild.create_forum(
+                    name, category=cat, topic=topic, available_tags=tags,
+                    default_layout=discord.ForumLayoutType.list_view,
+                )
+                return await forum.edit(require_tag=True) or forum
+
+            return await self.do("create", f"{label} with {len(tags)} tags", create)
+
+        kwargs, changed = {}, []
+        have = {t.name: t for t in ch.available_tags}
+        missing = [(n, e) for n, e in wanted if n not in have]
+        if missing:
+            # keep existing tags (and their ids) so tagged posts stay tagged
+            kwargs["available_tags"] = [*have.values(), *(discord.ForumTag(name=n, emoji=e) for n, e in missing)]
+            changed.append(f"+{len(missing)} tags")
+        if (ch.topic or "") != topic:
+            kwargs["topic"] = topic
+            changed.append("guidelines")
+        if ch.name != name:
+            kwargs["name"] = name
+            changed.append("name")
+        if cat is not None and ch.category_id != cat.id:
+            kwargs["category"] = cat
+            changed.append("category")
+        if not changed:
+            print(f"  ok      {label}")
+            return ch
+        return await self.do("update", f"{label}: {', '.join(changed)}", lambda: ch.edit(**kwargs)) or ch
+
     async def make_channel(self, spec, cat):
+        if spec.get("type") == "forum":
+            return await self.make_forum(spec, cat)
         name = spec["name"]
         voice = spec.get("type") == "voice"
         pool = self.guild.voice_channels if voice else self.guild.text_channels
@@ -221,11 +263,12 @@ class Makeover:
             prev_cat = cat
             prev = {}
             for ch in map(fresh, members):
-                if ch.type not in prev:
+                bucket = ch._sorting_bucket  # text and forums sort together, voice apart
+                if bucket not in prev:
                     await ch.move(beginning=True, category=cat, sync_permissions=False)
                 else:
-                    await ch.move(after=prev[ch.type], category=cat, sync_permissions=False)
-                prev[ch.type] = ch
+                    await ch.move(after=prev[bucket], category=cat, sync_permissions=False)
+                prev[bucket] = ch
         print("  move    done")
 
     # ------------------------------------------------------------ server
@@ -265,11 +308,12 @@ class Makeover:
             if not key:
                 continue
             ch = self.channels.get(slug(spec["name"]))
-            if ch is not None and self.guild.get_channel(ch.id) is not None:
-                if [m async for m in ch.history(limit=50) if m.author == self.guild.me]:
-                    print(f"  ok      {key} (already posted in #{ch.name})")
-                    continue
             post = layout.POSTS[key]
+            if ch is not None and self.guild.get_channel(ch.id) is not None:
+                mine = [m async for m in ch.history(limit=50) if m.author == self.guild.me]
+                if mine:
+                    await self.refresh_post(key, mine[-1], post)
+                    continue
             embed = discord.Embed(
                 title=post["title"],
                 description=self.expand(post["description"]),
@@ -277,7 +321,38 @@ class Makeover:
             )
             if post.get("footer"):
                 embed.set_footer(text=post["footer"])
-            await self.do("post", f"{key} -> #{spec['name']}", lambda: ch.send(embed=embed))
+            async def send():
+                msg = await ch.send(embed=embed)
+                await msg.pin()
+                return msg
+
+            await self.do("post", f"{key} -> #{spec['name']} (pinned)", send)
+
+    async def refresh_post(self, key, msg, post):
+        """Edit the bot's earlier post if layout.py's text changed, and pin it."""
+        old = msg.embeds[0] if msg.embeds else None
+        description = self.expand(post["description"])
+        stale = (
+            old is None
+            or old.title != post["title"]
+            or old.description != description
+            or (old.footer.text or None) != post.get("footer")
+        )
+        if not stale and msg.pinned:
+            print(f"  ok      {key} (posted and pinned)")
+            return
+        embed = discord.Embed(title=post["title"], description=description, colour=layout.FOREST)
+        if post.get("footer"):
+            embed.set_footer(text=post["footer"])
+
+        async def refresh():
+            if stale:
+                await msg.edit(embed=embed)
+            if not msg.pinned:
+                await msg.pin()
+
+        what = ", ".join(w for w, on in (("edit", stale), ("pin", not msg.pinned)) if on)
+        await self.do("update", f"{key} post: {what}", refresh)
 
     def report_untouched(self):
         channels = [c for c in self.guild.channels if c.id not in self.touched]

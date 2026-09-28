@@ -4,9 +4,11 @@
     python polish_server.py --apply
 
 - trims empty channels listed in layout.TRIM (never ones with messages or people in them)
-- safety defaults: @mentions-only notifications, verified-email members, media scanning
-- turns on Community, then Onboarding so members pick their own game roles
-- AutoMod: spam, mention raids and slurs (trash talk is fine), alerts to the mod channel
+- safety defaults: @mentions-only notifications, Medium verification, media scanning
+- turns on Community, then Onboarding so members pick their own games and channels
+- Welcome Screen with the five channels new members should see first
+- AutoMod: spam, mention raids, slurs and sexual content (trash talk is fine)
+- revokes never-expiring invites the bot made (short-lived links are safer)
 """
 
 import argparse
@@ -23,6 +25,7 @@ from setup_server import slug
 
 sys.stdout.reconfigure(encoding="utf-8")
 
+# Discord allows one preset-word rule per server, so slurs + sexual content share one.
 AUTOMOD_RULES = ["Front Desk: spam", "Front Desk: mention raids", "Front Desk: slurs"]
 
 
@@ -48,7 +51,10 @@ class Polish:
     async def trim(self):
         print("\nTrim")
         for name in layout.TRIM:
-            ch = next((c for c in self.guild.channels if c.name == name), None)
+            ch = next(
+                (c for c in self.guild.channels if c.name == name and not isinstance(c, discord.ForumChannel)),
+                None,
+            )
             if ch is None:
                 print(f"  ok      {name} (already gone)")
                 continue
@@ -68,8 +74,8 @@ class Polish:
         kwargs = {}
         if g.default_notifications != discord.NotificationLevel.only_mentions:
             kwargs["default_notifications"] = discord.NotificationLevel.only_mentions
-        if g.verification_level < discord.VerificationLevel.low:
-            kwargs["verification_level"] = discord.VerificationLevel.low
+        if g.verification_level < discord.VerificationLevel.medium:
+            kwargs["verification_level"] = discord.VerificationLevel.medium
         if g.explicit_content_filter != discord.ContentFilter.all_members:
             kwargs["explicit_content_filter"] = discord.ContentFilter.all_members
         if not kwargs:
@@ -114,14 +120,15 @@ class Polish:
                         channels=[ch] if ch else [],
                     )
                 )
-                print(f"  option  {p['title']} -> {o['emoji']} {o['title']} (@{o.get('role')})")
+                role = f" (@{o['role']})" if o.get("role") else ""
+                print(f"  option  {p['title']} -> {o['emoji']} {o['title']}{role}")
             prompts.append(
                 discord.OnboardingPrompt(
                     type=discord.OnboardingPromptType.multiple_choice,
                     title=p["title"],
                     options=options,
                     single_select=not p.get("multi"),
-                    required=False,
+                    required=p.get("required", False),
                 )
             )
         await self.do(
@@ -133,7 +140,7 @@ class Polish:
     # ------------------------------------------------------------ automod
     async def automod(self):
         print("\nAutoMod")
-        existing = {r.name for r in await self.guild.fetch_automod_rules()}
+        existing = {r.name: r for r in await self.guild.fetch_automod_rules()}
         alerts = self.channel(layout.AUTOMOD_ALERTS)
         exempt = [r for r in map(self.role, layout.AUTOMOD_EXEMPT_ROLES) if r]
         alert = discord.AutoModRuleAction(channel_id=alerts.id)
@@ -148,13 +155,17 @@ class Polish:
             ),
             (
                 AUTOMOD_RULES[2],
-                discord.AutoModTrigger(presets=discord.AutoModPresets(slurs=True)),
+                discord.AutoModTrigger(presets=discord.AutoModPresets(slurs=True, sexual_content=True)),
                 [block, alert],
             ),
         ]
         for name, trigger, actions in rules:
             if name in existing:
-                print(f"  ok      {name}")
+                rule = existing[name]
+                if trigger.presets is not None and rule.trigger.presets != trigger.presets:
+                    await self.do("update", f"{name}: presets", lambda: rule.edit(trigger=trigger))
+                else:
+                    print(f"  ok      {name}")
                 continue
             await self.do(
                 "create",
@@ -169,6 +180,36 @@ class Polish:
                 ),
             )
 
+    # ------------------------------------------------------------ welcome screen
+    async def welcome_screen(self):
+        print("\nWelcome Screen")
+        cfg = layout.WELCOME_SCREEN
+        chans = []
+        for name, emoji, desc in cfg["channels"]:
+            ch = self.channel(name)
+            if ch is None:
+                print(f"! missing channel {name}")
+                return
+            chans.append(discord.WelcomeChannel(channel=ch, description=desc, emoji=emoji))
+            print(f"  channel {emoji} {name}: {desc}")
+        await self.do(
+            "enable",
+            f"welcome screen with {len(chans)} channels",
+            lambda: self.guild.edit_welcome_screen(description=cfg["description"], welcome_channels=chans, enabled=True),
+        )
+
+    # ------------------------------------------------------------ invites
+    async def invites(self):
+        print("\nInvites")
+        if not layout.REVOKE_PERMANENT_INVITES:
+            print("  ok      leaving invites alone")
+            return
+        permanent = [i for i in await self.guild.invites() if i.max_age == 0 and i.inviter and i.inviter.id == self.guild.me.id]
+        if not permanent:
+            print("  ok      no permanent invites from the bot")
+        for inv in permanent:
+            await self.do("revoke", f"permanent invite {inv.code}", lambda: inv.delete(reason="Use short-lived invites"))
+
     async def run(self) -> bool:
         mode = "APPLYING" if self.apply else "DRY RUN (nothing changes; add --apply to do it)"
         print(f"{self.guild.name}: {mode}")
@@ -179,7 +220,9 @@ class Polish:
         await self.settings()
         await self.community()
         await self.onboarding()
+        await self.welcome_screen()
         await self.automod()
+        await self.invites()
         print("\nDone." if self.apply else "\nThat's the plan. Run again with --apply.")
         return True
 
