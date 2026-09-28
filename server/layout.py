@@ -59,8 +59,6 @@ CATEGORIES = [
             {"name": "💬・general", "topic": "Anything goes. Mostly."},
             {"name": "🤣・memes", "topic": "Post it here, not in #general."},
             {"name": "📸・clips", "topic": "Highlights, fails, and receipts.", "slowmode": 10},
-            {"name": "🔗・links", "topic": "Videos, articles, deals, patch notes."},
-            {"name": "🤖・bot-commands", "topic": "Keep the bot spam in one place."},
         ],
     },
     {
@@ -88,9 +86,7 @@ CATEGORIES = [
         "was": ["Voice Channels"],
         "channels": [
             {"name": "🔊 Lobby", "type": "voice", "was": ["General"]},
-            {"name": "🎮 Squad I", "type": "voice", "user_limit": 5, "was": ["General 2"]},
-            {"name": "🎮 Squad II", "type": "voice", "user_limit": 5},
-            {"name": "🎧 Chill", "type": "voice"},
+            {"name": "🎮 Squad", "type": "voice", "user_limit": 5, "was": ["🎮 Squad I", "General 2"]},
             {"name": "💤 AFK", "type": "voice", "afk": True},
         ],
     },
@@ -107,8 +103,9 @@ CATEGORIES = [
 
 AFK_TIMEOUT_SECONDS = 900  # 1, 5, 15, 30 or 60 minutes are the allowed values
 
-# Optional: path to a square PNG/JPG to use as the server icon.
-ICON_PATH = None
+# Optional: path to a square PNG/JPG to use as the server icon (relative to
+# this folder). assets/make_icon.py draws the Field Notebook one.
+ICON_PATH = "../assets/server-icon.png"
 
 # ---------------------------------------------------------------- posts
 # Embeds the bot posts once (skipped if the bot already posted there).
@@ -143,3 +140,43 @@ POSTS = {
         "footer": "FRONT DESK · 03",
     },
 }
+
+
+# ---------------------------------------------------------------- polish
+# Used by polish_server.py: Community, Onboarding, AutoMod, and trimming.
+
+# Empty channels to remove (skipped if anyone has posted in them).
+# Small servers feel emptier with more channels: aim for 5-10 text, 2-3 voice.
+TRIM = ["🔗・links", "🤖・bot-commands", "🎮 Squad II", "🎧 Chill"]
+
+COMMUNITY = {
+    "rules_channel": "📌・rules",
+    "updates_channel": "🛡️・mod",  # where Discord sends admin-only notices
+}
+
+# Onboarding: what new members see before they land. Channels listed here are
+# the defaults everyone gets; Discord needs at least 7, 5 of them postable.
+ONBOARDING_DEFAULT_CHANNELS = [
+    "📌・rules", "📣・announcements", "👋・welcome", "💬・general",
+    "🤣・memes", "📸・clips", "🕹️・gaming", "🎮・lfg",
+]
+ONBOARDING_PROMPTS = [
+    {
+        "title": "What do you play?",
+        "multi": True,
+        "options": [
+            *(
+                {"title": role, "emoji": emoji, "role": role, "channel": f"{emoji}・{channel}",
+                 "description": f"Get @{role} pings and the #{channel} channel."}
+                for emoji, channel, role in GAMES
+            ),
+            {"title": "Ping me for squads", "emoji": "🎮", "role": "LFG",
+             "description": "Get @LFG pings when someone needs a squad."},
+        ],
+    },
+]
+
+# AutoMod: alerts go to this channel; these roles are never filtered.
+AUTOMOD_ALERTS = "🛡️・mod"
+AUTOMOD_EXEMPT_ROLES = ["Keeper", "Moderator"]
+MENTION_LIMIT = 6

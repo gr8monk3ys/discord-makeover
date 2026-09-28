@@ -48,6 +48,22 @@ each one gets a ping role plus a channel. The script is safe to re-run: it
 matches existing channels and roles by plain name, so `#general` becomes
 `#💬・general` instead of a duplicate.
 
+**Second pass: Discord's built-in features**
+
+```bash
+.venv\Scripts\python polish_server.py          # dry run
+.venv\Scripts\python polish_server.py --apply
+```
+
+This turns on Community and **Onboarding**, so new members pick their own game
+roles on join. It also sets up **AutoMod** (spam, mention raids and slurs, with
+alerts to the mod channel), defaults notifications to @mentions only, and
+removes the empty channels listed in `TRIM`. Everything is configured at the
+bottom of `layout.py`. The bot's role must be at the top for Onboarding to
+assign roles.
+
+The server icon comes from `assets/make_icon.py` (`pip install pillow`).
+
 **Afterwards**
 
 - Give yourself **@Keeper** and your friends **@Squad**.

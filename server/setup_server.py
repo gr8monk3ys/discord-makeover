@@ -238,7 +238,7 @@ class Makeover:
             kwargs["afk_channel"] = self.afk_channel
             kwargs["afk_timeout"] = layout.AFK_TIMEOUT_SECONDS
         if layout.ICON_PATH:
-            kwargs["icon"] = Path(layout.ICON_PATH).read_bytes()
+            kwargs["icon"] = (Path(__file__).parent / layout.ICON_PATH).read_bytes()
         if kwargs:
             what = ", ".join(k.replace("_", " ") for k in kwargs)
             await self.do("update", what, lambda: self.guild.edit(**kwargs))
