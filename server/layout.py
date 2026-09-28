@@ -31,6 +31,7 @@ GAMES = [
 # ping roles.
 ROLES = [
     {"name": "Keeper", "color": FOREST, "hoist": True, "admin": True, "was": ["Admin"]},
+    {"name": "Moderator", "keep": True},
     {"name": "Squad", "color": MOSS, "hoist": True, "was": ["Member"]},
     {"name": "Guest", "color": MUTED},
     {"name": "Bots", "color": SLATE, "hoist": True, "was": ["Bot"]},

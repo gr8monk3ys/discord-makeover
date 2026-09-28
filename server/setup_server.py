@@ -79,6 +79,14 @@ class Makeover:
         ordered = []
         for spec in layout.ROLES:
             name = spec["name"]
+            if spec.get("keep"):
+                # Existing role we only slot into place; colour/perms untouched.
+                role = find(editable, spec)
+                if role is not None and role < self.guild.me.top_role:
+                    print(f"  ok      @{role.name} (kept as-is)")
+                    self.touched.add(role.id)
+                    ordered.append(role)
+                continue
             kwargs = {
                 "name": name,
                 "colour": discord.Colour(spec.get("color", 0)),
